@@ -45,6 +45,14 @@ class Player(BasePlayer):
     def setup_round(self):
         self.endowment = C.ENDOWMENT
 
+    @property
+    def coplayer(self):
+        return self.group.get_player_by_id(3-self.id_in_group)
+
+    @property
+    def tickets_purchases_by_others(self):
+        return self.coplayer.tickets_purchased # Right now same function as above, but potential for different group sizes
+
 
 
 # PAGES
