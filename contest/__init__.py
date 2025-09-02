@@ -104,6 +104,10 @@ class Player(BasePlayer):
         #return self.coplayer.tickets_purchased # Right now same function as above, but potential for different group sizes
         return self.group.total_tickets_purchased - self.tickets_purchased # Now it works independent of group size
 
+    @property
+    def in_paid_rounds(self):
+        return [rd for rd in self.in_all_rounds() if rd.subsession.is_paid]
+
 
 # PAGES
 class StartRound(WaitPage):
