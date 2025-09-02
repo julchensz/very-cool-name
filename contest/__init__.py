@@ -33,6 +33,12 @@ class Group(BaseGroup):
     cost_per_ticket = models.CurrencyField()
     prize = models.CurrencyField()
 
+    @property
+    def total_tickets_purchased(self):
+        return sum(player.tickets_purchased for player in self.get_players()) # Comprehension
+        # Done so it could be used elsewhere too
+
+
     def setup_round(self):
         self.cost_per_ticket = C.COST_PER_TICKET
         self.prize = C.PRIZE
@@ -43,7 +49,7 @@ class Group(BaseGroup):
         # total = 0
         # for player in self.getplayers():
         #   total += player.tickets_purchased
-        total = sum(player.tickets_purchased for player in self.get_players()) # Comprehension
+        total = self.total_tickets_purchased
         for player in self.get_players():
             try:
                 player.prize_won = player.tickets_purchased / total
@@ -71,8 +77,8 @@ class Player(BasePlayer):
 
     @property
     def tickets_purchased_by_others(self):
-        return self.coplayer.tickets_purchased # Right now same function as above, but potential for different group sizes
-
+        #return self.coplayer.tickets_purchased # Right now same function as above, but potential for different group sizes
+        return self.group.total_tickets_purchased - self.tickets_purchased # Now it works independent of group size
 
 
 # PAGES
