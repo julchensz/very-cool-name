@@ -18,6 +18,18 @@ class Subsession(BaseSubsession):
     lookup_table = models.StringField()
     time_for_task = models.IntegerField()  # in seconds
 
+    def setup_round(self):
+        self.payment_per_correct = Currency(0.10)
+        self.lookup_table = "AB"
+        self.word = "AB"
+
+    @property
+    def lookup_dict(self):
+        lookup = {}
+        for letter in ["A","B"]:
+            lookup[letter] = self.lookup_table.index(letter)+1
+        return lookup
+
 
 class Group(BaseGroup):
     pass
@@ -26,10 +38,21 @@ class Group(BaseGroup):
 class Player(BasePlayer):
     response_1 = models.IntegerField()
     response_2 = models.IntegerField()
-    # response_3 = models.IntegerField()
-    # response_4 = models.IntegerField()
-    # response_5 = models.IntegerField()
+    response_3 = models.IntegerField()
+    response_4 = models.IntegerField()
+    response_5 = models.IntegerField()
     is_correct = models.BooleanField()
+
+    def check_response(self):
+        self.is_correct = (
+            self.response_1 == self.subsession.lookup_dict[self.subsession.word[0]] and
+            self.response_2 == self.subsession.lookup_dict[self.subsession.word[1]]
+        )
+        if self.is_correct:
+            self.payoff = self.subsession.payment_per_correct
+
+def creating_session(subsession):
+    subsession.setup_round()
 
 
 # PAGES
@@ -46,6 +69,9 @@ class Decision(Page):
         "response_2",
     ]
 
+    @staticmethod
+    def before_next_page(player, timeout_happend):
+        player.check_response()
 
 class Results(Page):
     @staticmethod
