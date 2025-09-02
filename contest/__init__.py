@@ -25,6 +25,10 @@ class Subsession(BaseSubsession):
         for group in self.get_groups():
             group.setup_round()
 
+    def determine_outcome(self):
+        for group in self.get_groups():
+            group.determine_outcome()
+
 class Group(BaseGroup):
     cost_per_ticket = models.CurrencyField()
     prize = models.CurrencyField()
@@ -34,6 +38,22 @@ class Group(BaseGroup):
         self.prize = C.PRIZE
         for player in self.get_players():
             player.setup_round()
+
+    def determine_outcome(self):
+        # total = 0
+        # for player in self.getplayers():
+        #   total += player.tickets_purchased
+        total = sum(player.tickets_purchased for player in self.get_players()) # Comprehension
+        for player in self.get_players():
+            try:
+                player.prize_won = player.tickets_purchased / total
+            except ZeroDivisionError:
+                    player.prize_won = 1 / len(self.get_players())
+            player.earnings = (
+                    player.endowment -
+                    player.tickets_purchased * self.cost_per_ticket +
+                    self.prize*player.prize_won
+            )
 
 
 class Player(BasePlayer):
@@ -50,7 +70,7 @@ class Player(BasePlayer):
         return self.group.get_player_by_id(3-self.id_in_group)
 
     @property
-    def tickets_purchases_by_others(self):
+    def tickets_purchased_by_others(self):
         return self.coplayer.tickets_purchased # Right now same function as above, but potential for different group sizes
 
 
@@ -77,7 +97,11 @@ class Decision(Page):
 
 
 class ResultsWaitPage(WaitPage):
-    pass
+    wait_for_all_groups = True
+
+    @staticmethod
+    def after_all_players_arrive(subsession):
+        subsession.determine_outcome()
 
 
 class Results(Page):
