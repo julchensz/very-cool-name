@@ -2,6 +2,13 @@ from os import environ
 
 SESSION_CONFIGS = [
     dict(
+        name="encryption",  # not recorded on the output, but will be called in the init
+        app_sequence=[
+            "encryption"
+        ],
+        num_demo_participants=2,
+    ),
+    dict(
         name="contest_share", # not recorded on the output, but will be called in the init
         app_sequence=[
             "contest"
