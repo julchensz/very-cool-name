@@ -13,14 +13,14 @@ class C(BaseConstants):
     NAME_IN_URL = 'encryption'
     PLAYERS_PER_GROUP = None
     NUM_ROUNDS = 3
-    TIME_FOR_TASK = 60
+    TIME_FOR_TASK = 60  # in seconds
 
 
 class Subsession(BaseSubsession):
     payment_per_correct = models.CurrencyField()
-    word = models.StringField()
     lookup_table = models.StringField()
-    time_for_task = models.IntegerField()  # in seconds
+    word = models.StringField()
+    time_for_task = models.IntegerField()
 
     def setup_round(self):
         self.payment_per_correct = Currency(0.10)
@@ -37,13 +37,7 @@ class Subsession(BaseSubsession):
 
     @property
     def correct_response(self):
-        return[self.lookup_dict[letter] for letter in self.word]
-        # self.lookup_dict[self.subsession.word[0]],
-        # self.lookup_dict[self.subsession.word[1]],
-        # self.lookup_dict[self.subsession.word[2]],
-        # self.lookup_dict[self.subsession.word[3]],
-        # self.lookup_dict[self.subsession.word[4]],
-
+        return [self.lookup_dict[letter] for letter in self.word]
 
 
 class Group(BaseGroup):
@@ -52,7 +46,7 @@ class Group(BaseGroup):
 
 class Player(BasePlayer):
     started_task_at = models.FloatField()
-    time_elapsed = models.FloatField()
+    # time_elapsed = models.FloatField()
 
     response_1 = models.IntegerField()
     response_2 = models.IntegerField()
@@ -60,7 +54,6 @@ class Player(BasePlayer):
     response_4 = models.IntegerField()
     response_5 = models.IntegerField()
     is_correct = models.BooleanField()
-
 
     @property
     def response_fields(self):
@@ -70,8 +63,7 @@ class Player(BasePlayer):
             "response_3",
             "response_4",
             "response_5",
-         ]
-
+        ]
 
     @property
     def response(self):
@@ -98,6 +90,7 @@ class Player(BasePlayer):
 
     def get_remaining_time(self):
         return self.subsession.time_for_task - self.get_time_elapsed()
+
 
 def creating_session(subsession):
     subsession.setup_round()
@@ -128,6 +121,7 @@ class Decision(Page):
     @staticmethod
     def get_timeout_seconds(player):
         return player.get_remaining_time()
+
 
 class Results(Page):
     @staticmethod
