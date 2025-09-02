@@ -72,6 +72,10 @@ class Player(BasePlayer):
         self.endowment = C.ENDOWMENT
 
     @property
+    def max_tickets_affordable(self):
+        return int(self.endowment / self.group.cost_per_ticket) # biggest integer less than its argument
+
+    @property
     def coplayer(self):
         return self.group.get_player_by_id(3-self.id_in_group)
 
@@ -100,6 +104,13 @@ class Decision(Page):
     form_model = "player"
     form_fields = ["tickets_purchased"]
 
+    @staticmethod
+    def error_message(player, values):
+        if values["tickets_purchased"]<0:
+            return "You cannot buy a negative number of tickets."
+        if values["tickets_purchased"] > player.max_tickets_affordable:
+            return f"You can only afford to buy {player.max_tickets_affordable} tickets."
+        return None # Does not need to be put there. Any function that doesn't return anything return automatically None
 
 
 class ResultsWaitPage(WaitPage):
