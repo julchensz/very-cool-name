@@ -11,6 +11,7 @@ class C(BaseConstants):
     NAME_IN_URL = 'contest'
     PLAYERS_PER_GROUP = 2
     NUM_ROUNDS = 3
+    NUM_PAID_ROUNDS = 1
     ENDOWMENT = 10
     COST_PER_TICKET = 0.5
     PRIZE = 8
@@ -18,13 +19,19 @@ class C(BaseConstants):
 
 class Subsession(BaseSubsession):
     csf = models.StringField()
-    is_paid = models.BooleanField()
+    is_paid = models.BooleanField(initial=False)
 
     def setup_round(self):
         self.csf = self.session.config["contest_csf"]
-        self.is_paid = self.round_number %2 == 1
+        if self.round_number == 1:
+            self.setup_paid_rounds()
         for group in self.get_groups():
             group.setup_round()
+
+    def setup_paid_rounds(self):
+        for rd in random.sample(self.in_rounds(1, C.NUM_ROUNDS),
+                                k=C.NUM_PAID_ROUNDS):
+            rd.is_paid = True
 
     def determine_outcome(self):
         for group in self.get_groups():
@@ -36,9 +43,8 @@ class Group(BaseGroup):
 
     @property
     def total_tickets_purchased(self):
-        return sum(player.tickets_purchased for player in self.get_players()) # Comprehension
+        return sum(player.tickets_purchased for player in self.get_players())  # Comprehension
         # Done so it could be used elsewhere too
-
 
     def setup_round(self):
         self.cost_per_ticket = C.COST_PER_TICKET
@@ -49,7 +55,7 @@ class Group(BaseGroup):
     def determine_outcome_allpay(self):
         max_tickets = max(player.tickets_purchased for player in self.get_players())
         num_tied = len([player for player in self.get_players()
-                if player.tickets_purchased == max_tickets])
+                        if player.tickets_purchased == max_tickets])
         for player in self.get_players():
             if player.tickets_purchased == max_tickets:
                 player.prize_won = 1 / num_tied
@@ -65,15 +71,15 @@ class Group(BaseGroup):
             try:
                 player.prize_won = player.tickets_purchased / total
             except ZeroDivisionError:
-                    player.prize_won = 1 / len(self.get_players())
+                player.prize_won = 1 / len(self.get_players())
 
     def determine_outcome_lottery(self):
         try:
             winner = random.choices(self.get_players(), k=1,
-                                    weights=[p.tickets_purchased for p in self.get_players()])[0] #index to get the actual player aka. first element of the list
+                                    weights=[p.tickets_purchased for p in self.get_players()])[0]  # index to get the actual player aka. first element of the list
         except ValueError:
-           # winner = random.choices(self.get_players(),k=1)[0] # If there are not weight given, choice is just random OR
-            winner = random.choice(self.get_players()) # random choice with uniform distribution
+            # winner = random.choices(self.get_players(),k=1)[0] # If there are not weight given, choice is just random OR
+            winner = random.choice(self.get_players())  # random choice with uniform distribution
         for player in self.get_players():
             if player == winner:
                 player.prize_won = 1
@@ -104,11 +110,11 @@ class Player(BasePlayer):
     earnings = models.CurrencyField()
 
     def setup_round(self):
-        self.endowment = self.session.config.get("contest_endowment", C.ENDOWMENT) # if key isnt there, it returns a None value, if its not specified fall back iin C.Endowment
+        self.endowment = self.session.config.get("contest_endowment", C.ENDOWMENT)  # if key isnt there, it returns a None value, if its not specified fall back iin C.Endowment
 
     @property
     def max_tickets_affordable(self):
-        return int(self.endowment / self.group.cost_per_ticket) # biggest integer less than its argument
+        return int(self.endowment / self.group.cost_per_ticket)  # biggest integer less than its argument
 
     @property
     def coplayer(self):
@@ -116,8 +122,8 @@ class Player(BasePlayer):
 
     @property
     def tickets_purchased_by_others(self):
-        #return self.coplayer.tickets_purchased # Right now same function as above, but potential for different group sizes
-        return self.group.total_tickets_purchased - self.tickets_purchased # Now it works independent of group size
+        # return self.coplayer.tickets_purchased # Right now same function as above, but potential for different group sizes
+        return self.group.total_tickets_purchased - self.tickets_purchased  # Now it works independent of group size
 
     @property
     def in_paid_rounds(self):
@@ -145,11 +151,11 @@ class Decision(Page):
 
     @staticmethod
     def error_message(player, values):
-        if values["tickets_purchased"]<0:
+        if values["tickets_purchased"] < 0:
             return "You cannot buy a negative number of tickets."
         if values["tickets_purchased"] > player.max_tickets_affordable:
             return f"You can only afford to buy {player.max_tickets_affordable} tickets."
-        return None # Does not need to be put there. Any function that doesn't return anything return automatically None
+        return None  # Does not need to be put there. Any function that doesn't return anything return automatically None
 
 
 class ResultsWaitPage(WaitPage):
