@@ -4,6 +4,13 @@
 
 {{ block styles}}
 <style>
+    .otree-timer {
+       display: none
+    }
+    .timer-block{
+        background: cornflowerblue;
+        color: white;
+    }
     .word{
         font-size: 2rem;
         color: cornflowerblue;
@@ -13,6 +20,12 @@
 {{ endblock }}
 
 {{ block content }}
+
+<div class="row justify-content-center timer-block border rounded">
+    <div class="col text-center">
+        &#9203; You have <span class="otree-timer__time-left"></span>  remaining to encrypt words. &#9203;
+    </div>
+</div>
 
 <table class="table">
     <thead>
