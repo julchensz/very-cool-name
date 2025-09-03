@@ -7,6 +7,7 @@ SESSION_CONFIGS = [
             "encryption"
         ],
         num_demo_participants=2,
+        random_seed = 123456,
     ),
     dict(
         name="contest_share", # not recorded on the output, but will be called in the init
